@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostHub - 专业Markdown编辑器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --publish-btn: #ff5722;
+            --dark: #1d3557;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --border: #e2e8f0;
+            --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --editor-bg: #fafbff;
+            --status-bar: #ffffff;
+            --toolbar-bg: #f8f9fa;
+            --preview-bg: #fcfdff;
+            --code-bg: #1d3557;
+            --highlight: #e6f7ff;
+            --title-bg: #f0f4f9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fc 0%, #edf2f7 100%);
+            color: #2d3748;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 8px;
+            padding: 15px;
+            height: 100%;
+            max-width: 100%;
+        }
+
+        /* 顶部区域 - Logo和模式切换 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            margin-bottom: 5px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .editor-mode-switch {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 标题框 */
+        .title-container {
+            padding: 10px 15px;
+            background: var(--title-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        #article-title {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 1.6rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-weight: 700;
+            outline: none;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        #article-title:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.15);
+        }
+
+        /* Markdown工具栏 */
+        .markdown-toolbar {
+            display: flex;
+            padding: 10px 12px;
+            background: var(--toolbar-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .markdown-toolbar button {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .markdown-toolbar button:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e0;
+        }
+
+        .markdown-toolbar button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 核心编辑区域 */
+        .editor-container {
+            display: flex;
+            flex: 1;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .editor-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            min-height: 0;
+        }
+
+        .editor-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--toolbar-bg);
+            color: var(--dark);
+        }
+
+        .editor-header i {
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .editor-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        #markdown-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: 'Fira Code', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 18px;
+            background: var(--editor-bg);
+            color: #2d3748;
+            outline: none;
+            tab-size: 4;
+        }
+
+        #markdown-input:focus {
+            background: white;
+        }
+
+        .preview-content {
+            padding: 18px;
+            line-height: 1.7;
+            font-size: 15px;
+            color: #4a5568;
+            overflow-y: auto;
+            min-height: 0;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .preview-content h1,
+        .preview-content h2,
+        .preview-content h3 {
+            margin-top: 1.3em;
+            margin-bottom: 0.7em;
+            color: var(--dark);
+        }
+
+        .preview-content h1 {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.2em;
+            font-size: 1.9rem;
+        }
+
+        .preview-content h2 {
+            font-size: 1.6rem;
+        }
+
+        .preview-content h3 {
+            font-size: 1.3rem;
+        }
+
+        .preview-content code {
+            background: #f1f3f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        .preview-content pre {
+            background: var(--code-bg);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            overflow: auto;
+            margin: 15px 0;
+            font-size: 13px;
+            line-height: 1.5;
+            border-left: 4px solid var(--primary);
+        }
+
+        .preview-content pre code {
+            background: none;
+            padding: 0;
+            color: #e2e8f0;
+        }
+
+        .preview-content blockquote {
+            border-left: 3px solid var(--primary);
+            padding: 12px 18px;
+            background: var(--highlight);
+            margin: 15px 0;
+            border-radius: 0 6px 6px 0;
+            color: #4a5568;
+        }
+
+        .preview-content ul,
+        .preview-content ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .preview-content li {
+            margin-bottom: 8px;
+        }
+
+        .preview-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            border: 1px solid var(--border);
+        }
+
+        .preview-content th {
+            background: var(--toolbar-bg);
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        .preview-content td {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+        }
+
+        /* 状态栏 - 页面底部 */
+        .status-bar {
+            width: 100%;
+            height: 50px;
+            background: var(--status-bar);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 13px;
+            color: var(--dark);
+            margin-top: 8px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .editor-status {
+            display: flex;
+            gap: 16px;
+        }
+
+        .editor-status span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--publish-btn);
+            color: white;
+            box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid #cbd5e0;
+            color: var(--dark);
+            position: relative;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #a0aec0;
+        }
+
+        .btn-success {
+            background: #00c851;
+            color: white;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            z-index: 1;
+            bottom: 100%;
+            right: 0;
+            margin-bottom: 5px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .dropdown-content button {
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .dropdown-content button:hover {
+            background: #f1f5f9;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1100px) {
+            .editor-container {
+                flex-direction: column;
+            }
+
+            .editor-column {
+                min-height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .logo {
+                justify-content: center;
+            }
+
+            .markdown-toolbar {
+                justify-content: center;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                height: auto;
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .editor-status {
+                width: 100%;
+                justify-content: space-between;
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .markdown-toolbar {
+                gap: 4px;
+            }
+
+            .markdown-toolbar button {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+
+            .btn {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+
+            .editor-status {
+                gap: 10px;
+            }
+        }
+
+        .cursor-position {
+            min-width: 70px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 12px 0 8px;
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        .empty-preview {
+            color: var(--gray);
+            font-style: italic;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* 平台选择模态框样式 */
+        .platform-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: var(--dark);
+            font-size: 1.5rem;
+        }
+
+        .close-modal {
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--gray);
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: var(--primary);
+        }
+
+        .platform-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .platform-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .platform-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow);
+            border-color: var(--primary);
+        }
+
+        .platform-btn img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 顶部区域 -->
+        <header>
+            <div class="logo">
+                <i class="fas fa-paper-plane logo-icon"></i>
+                <div class="logo-text">PostHub</div>
+            </div>
+            <div class="editor-mode-switch">
+                <button class="btn btn-sm btn-primary" id="md-mode-btn">
+                    <i class="fas fa-code"></i> Markdown模式
+                </button>
+                <button class="btn btn-sm" id="rich-text-mode-btn">
+                    <i class="fas fa-font"></i> 富文本模式
+                </button>
+            </div>
+        </header>
+
+        <!-- 标题框 -->
+        <div class="title-container">
+            <input type="text" id="article-title" placeholder="无标题">
+        </div>
+
+        <!-- Markdown工具栏 -->
+        <div class="markdown-toolbar">
+            <button data-command="h1" title="标题1"><i class="fas fa-heading"></i> H1</button>
+            <button data-command="h2" title="标题2"><i class="fas fa-heading"></i> H2</button>
+            <button data-command="h3" title="标题3"><i class="fas fa-heading"></i> H3</button>
+            <button data-command="bold" title="粗体"><i class="fas fa-bold"></i></button>
+            <button data-command="italic" title="斜体"><i class="fas fa-italic"></i></button>
+            <button data-command="quote" title="引用"><i class="fas fa-quote-right"></i></button>
+            <button data-command="link" title="链接"><i class="fas fa-link"></i></button>
+            <button data-command="image" title="图片"><i class="fas fa-image"></i></button>
+            <button data-command="code" title="行内代码"><i class="fas fa-code"></i></button>
+            <button data-command="code-block" title="代码块"><i class="fas fa-file-code"></i></button>
+            <button data-command="ul" title="无序列表"><i class="fas fa-list-ul"></i></button>
+            <button data-command="ol" title="有序列表"><i class="fas fa-list-ol"></i></button>
+            <button data-command="table" title="表格"><i class="fas fa-table"></i></button>
+        </div>
+
+        <!-- 核心编辑区域 -->
+        <div class="editor-container">
+            <!-- 左侧编辑区 -->
+            <div class="editor-column">
+                <div class="editor-header">
+                    <i class="fas fa-edit"></i>
+                    <span>文章编辑</span>
+                </div>
+                <div class="editor-content">
+                    <textarea id="markdown-input" placeholder="请输入文字..."></textarea>
+                </div>
+            </div>
+
+            <!-- 右侧预览区 -->
+            <div class="editor-column">
+                <div class="editor-header">
+                    <i class="fas fa-eye"></i>
+                    <span>预览效果</span>
+                </div>
+                <div class="editor-content">
+                    <div class="preview-content" id="preview-output">
+                        <p class="empty-preview">编辑区输入内容后，预览将显示在这里...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 平台选择模态框 -->
+        <div id="platform-modal" class="platform-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>选择发布平台</h3>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="platform-list">
+                    <button data-platform="csdn" class="platform-btn">
+                        <img src="https://csdnimg.cn/public/common/toolbar/images/csdnlogo.png" alt="CSDN"> CSDN
+                    </button>
+                    <button data-platform="zhihu" class="platform-btn">
+                        <img src="https://static.zhihu.com/heifetz/assets/logo.6f1a3c0c.svg" alt="知乎"> 知乎
+                    </button>
+                    <button data-platform="juejin" class="platform-btn">
+                        <i class="fab fa-gem"></i> 掘金
+                    </button>
+                    <button data-platform="cnblogs" class="platform-btn">
+                        <i class="fas fa-blog"></i> 博客园
+                    </button>
+                    <button data-platform="segmentfault" class="platform-btn">
+                        <i class="fas fa-code"></i> SegmentFault
+                    </button>
+                    <button data-platform="jianshu" class="platform-btn">
+                        <i class="fas fa-book"></i> 简书
+                    </button>
+                    <button data-platform="oschina" class="platform-btn">
+                        <i class="fab fa-git-alt"></i> 开源中国
+                    </button>
+                    <button data-platform="51cto" class="platform-btn">
+                        <i class="fas fa-laptop-code"></i> 51CTO
+                    </button>
+                    <button data-platform="toutiao" class="platform-btn">
+                        <i class="fas fa-newspaper"></i> 开发者头条
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 状态栏 - 页面底部 -->
+        <div class="status-bar">
+            <div class="editor-status">
+                <span><i class="fas fa-font"></i> 字数: <span id="word-count">0</span></span>
+                <span><i class="fas fa-bars"></i> 行数: <span id="line-count">0</span></span>
+                <span class="cursor-position"><i class="fas fa-caret-right"></i> 行: <span id="current-line">1</span>, 列:
+                    <span id="current-column">1</span></span>
+            </div>
+            <div class="action-buttons">
+                <div class="dropdown">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-save"></i> 保存草稿
+                    </button>
+                    <div class="dropdown-content">
+                        <button id="save-draft-btn">
+                            <i class="fas fa-save"></i> 保存草稿
+                        </button>
+                        <button id="save-preview-btn">
+                            <i class="fas fa-eye"></i> 保存并预览
+                        </button>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="publish-btn">
+                    <i class="fas fa-paper-plane"></i> 发布文章
+                </button>
+            </div>
+        </div>
+
+        <footer>
+            <p>PostHub v1.7 &copy; 2023 - 智能文章分发中心 | 支持平台：知乎、CSDN、掘金、博客园</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM元素
+        const markdownInput = document.getElementById('markdown-input');
+        const previewOutput = document.getElementById('preview-output');
+        const publishBtn = document.getElementById('publish-btn');
+        const saveDraftBtn = document.getElementById('save-draft-btn');
+        const savePreviewBtn = document.getElementById('save-preview-btn');
+
+        // 获取模态框元素
+        const platformModal = document.getElementById('platform-modal');
+        const closeModal = document.querySelector('.close-modal');
+        const platformBtns = document.querySelectorAll('.platform-btn');
+
+        // 状态栏元素
+        const wordCountEl = document.getElementById('word-count');
+        const lineCountEl = document.getElementById('line-count');
+        const currentLineEl = document.getElementById('current-line');
+        const currentColumnEl = document.getElementById('current-column');
+        const articleTitle = document.getElementById('article-title');
+
+        // 设置默认标题
+        articleTitle.value = "无标题";
+
+        // Markdown解析函数
+        function parseMarkdown(text) {
+            if (!text.trim()) return '<p class="empty-preview">编辑区输入内容后，预览将显示在这里...</p>';
+
+            // 标题
+            text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+            text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+            text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+
+            // 代码块
+            text = text.replace(/```([\s\S]*?)```/g, function (match, code) {
+                return `<pre><code>${code.trim()}</code></pre>`;
+            });
+
+            // 行内代码
+            text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+
+            // 引用
+            text = text.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
+
+            // 无序列表
+            text = text.replace(/^- (.*$)/gm, '<li>$1</li>');
+            text = text.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+
+            // 有序列表
+            text = text.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+            text = text.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
+
+            // 粗体
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // 斜体
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            // 链接
+            text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+            // 图片
+            text = text.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
+
+            // 表格
+            text = text.replace(/\|(.*)\|/g, function (match, row) {
+                const cells = row.split('|').filter(cell => cell.trim() !== '');
+                return `<tr>${cells.map(cell => `<td>${cell.trim()}</td>`).join('')}</tr>`;
+            });
+            text = text.replace(/^\|:?-+:?\|/gm, function (match) {
+                const cells = match.split('|').filter(cell => cell.trim() !== '');
+                return `<tr>${cells.map(cell => `<th>${cell.replace(/-/g, '').trim()}</th>`).join('')}</tr>`;
+            });
+            text = text.replace(/<tr>.*<\/tr>/g, function (match) {
+                return `<table>${match}</table>`;
+            });
+
+            // 段落
+            text = text.replace(/\n\n/g, '</p><p>');
+            text = '<p>' + text + '</p>';
+
+            return text;
+        }
+
+        // 显示平台选择模态框
+        function showPlatformModal() {
+            platformModal.style.display = 'block';
+        }
+
+        // 关闭模态框
+        function closePlatformModal() {
+            platformModal.style.display = 'none';
+        }
+
+        // 点击关闭按钮
+        closeModal.addEventListener('click', closePlatformModal);
+
+        // 点击模态框外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target === platformModal) {
+                closePlatformModal();
+            }
+        });
+
+        // 更新预览
+        function updatePreview() {
+            previewOutput.innerHTML = parseMarkdown(markdownInput.value);
+        }
+
+        // 更新状态栏
+        function updateStatusBar() {
+            const content = markdownInput.value;
+
+            // 字数统计
+            const words = content.trim() === '' ? 0 : content.trim().split(/\s+/).length;
+            wordCountEl.textContent = words;
+
+            // 行数统计
+            const lines = content.split('\n').length;
+            lineCountEl.textContent = lines;
+
+            // 获取光标位置
+            const cursorPos = markdownInput.selectionStart;
+            const textBeforeCursor = content.substring(0, cursorPos);
+            const currentLine = textBeforeCursor.split('\n').length;
+            const currentColumn = cursorPos - textBeforeCursor.lastIndexOf('\n');
+
+            currentLineEl.textContent = currentLine;
+            currentColumnEl.textContent = currentColumn;
+        }
+
+        // 初始化
+        updatePreview();
+        updateStatusBar();
+
+        // 事件监听
+        markdownInput.addEventListener('input', () => {
+            updatePreview();
+            updateStatusBar();
+        });
+
+        markdownInput.addEventListener('click', updateStatusBar);
+        markdownInput.addEventListener('keyup', updateStatusBar);
+
+        // 保存草稿功能
+        saveDraftBtn.addEventListener('click', function () {
+            const content = markdownInput.value;
+            if (!content.trim()) {
+                alert('文章内容不能为空！');
+                return;
+            }
+
+            this.innerHTML = '<i class="fas fa-check"></i> 已保存';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-save"></i> 保存草稿';
+            }, 2000);
+
+            alert('草稿已保存！');
+        });
+
+        // 保存并预览功能
+        savePreviewBtn.addEventListener('click', function () {
+            const content = markdownInput.value;
+            if (!content.trim()) {
+                alert('文章内容不能为空！');
+                return;
+            }
+
+            const title = articleTitle.value || "无标题文章";
+            const previewContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>预览: ${title}</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body {
+                            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            padding: 30px 20px;
+                            line-height: 1.7;
+                            background: #f8f9fc;
+                        }
+                        .preview-container {
+                            background: white;
+                            border-radius: 12px;
+                            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+                            padding: 30px;
+                            margin-bottom: 70px;
+                        }
+                        h1, h2, h3 {
+                            margin-top: 1.3em;
+                            margin-bottom: 0.7em;
+                            color: #1d3557;
+                        }
+                        h1 {
+                            border-bottom: 1px solid #dee2e6;
+                            padding-bottom: 0.2em;
+                            font-size: 2rem;
+                        }
+                        code {
+                            background: #f1f3f9;
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-family: 'Fira Code', monospace;
+                            font-size: 0.9em;
+                            color: #d63384;
+                        }
+                        pre {
+                            background: #1d3557;
+                            color: white;
+                            padding: 15px;
+                            border-radius: 8px;
+                            overflow: auto;
+                            margin: 15px 0;
+                            font-size: 14px;
+                            line-height: 1.5;
+                        }
+                        pre code {
+                            background: none;
+                            padding: 0;
+                            color: #e2e8f0;
+                        }
+                        blockquote {
+                            border-left: 3px solid #6a11cb;
+                            padding: 12px 18px;
+                            background: #e6f7ff;
+                            margin: 15px 0;
+                            border-radius: 0 6px 6px 0;
+                            color: #4a5568;
+                        }
+                        ul, ol {
+                            margin-left: 20px;
+                            margin-bottom: 12px;
+                        }
+                        li {
+                            margin-bottom: 8px;
+                        }
+                        .preview-actions {
+                            position: fixed;
+                            bottom: 20px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            display: flex;
+                            gap: 15px;
+                            background: white;
+                            padding: 12px 20px;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                            z-index: 100;
+                        }
+                        .preview-btn {
+                            padding: 10px 20px;
+                            border-radius: 6px;
+                            border: none;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s;
+                            font-size: 0.95rem;
+                        }
+                        .edit-draft {
+                            background: #6a11cb;
+                            color: white;
+                        }
+                        .publish-article {
+                            background: #ff5722;
+                            color: white;
+                        }
+                        .preview-btn:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="preview-container">
+                        <h1>${title}</h1>
+                        ${parseMarkdown(content)}
+                    </div>
+                    
+                    <div class="preview-actions">
+                        <button class="preview-btn edit-draft" onclick="window.close()">
+                            <i class="fas fa-edit"></i> 编辑草稿
+                        </button>
+                        <button class="preview-btn publish-article" onclick="alert('文章发布成功！');">
+                            <i class="fas fa-paper-plane"></i> 发布文章
+                        </button>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(previewContent);
+            previewWindow.document.close();
+        });
+
+        // 发布功能
+        publishBtn.addEventListener('click', function () {
+            const content = markdownInput.value;
+            if (!content.trim()) {
+                alert('文章内容不能为空！');
+                return;
+            }
+            showPlatformModal();
+        });
+
+        // Markdown 工具栏功能
+        document.querySelectorAll('.markdown-toolbar button').forEach(button => {
+            button.addEventListener('click', function () {
+                const command = this.dataset.command;
+                const cursorPos = markdownInput.selectionStart;
+                const textBefore = markdownInput.value.substring(0, cursorPos);
+                const textAfter = markdownInput.value.substring(cursorPos);
+                let newText = "";
+
+                switch (command) {
+                    case "h1":
+                        newText = "# 标题";
+                        break;
+                    case "h2":
+                        newText = "## 标题";
+                        break;
+                    case "h3":
+                        newText = "### 标题";
+                        break;
+                    case "bold":
+                        newText = "**加粗文本**";
+                        break;
+                    case "italic":
+                        newText = "*斜体文本*";
+                        break;
+                    case "quote":
+                        newText = "> 引用内容";
+                        break;
+                    case "link":
+                        newText = "[链接文本](https://)";
+                        break;
+                    case "image":
+                        newText = "![图片描述](https://)";
+                        break;
+                    case "code":
+                        newText = "`行内代码`";
+                        break;
+                    case "code-block":
+                        newText = "```\n代码块\n```";
+                        break;
+                    case "ul":
+                        newText = "- 列表项";
+                        break;
+                    case "ol":
+                        newText = "1. 列表项";
+                        break;
+                    case "table":
+                        newText = "| 标题1 | 标题2 |\n|-------|-------|\n| 内容1 | 内容2 |";
+                        break;
+                }
+
+                markdownInput.value = textBefore + newText + textAfter;
+                markdownInput.focus();
+                markdownInput.selectionEnd = cursorPos + newText.length;
+                updatePreview();
+                updateStatusBar();
+            });
+        });
+
+        // 编辑器模式切换
+        document.getElementById('rich-text-mode-btn').addEventListener('click', function () {
+            alert('已切换到富文本模式');
+        });
+
+        // 页面加载后聚焦到标题
+        window.addEventListener('load', () => {
+            articleTitle.focus();
+        });
+        // 平台按钮点击事件
+        platformBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const platform = this.dataset.platform;
+                const title = articleTitle.value || "无标题文章";
+                const content = markdownInput.value;
+
+                // 显示发布中状态
+                const originalText = publishBtn.innerHTML;
+                publishBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发布中';
+                publishBtn.disabled = true;
+
+                // 模拟发布延迟
+                setTimeout(() => {
+                    publishBtn.innerHTML = originalText;
+                    publishBtn.disabled = false;
+                    closePlatformModal();
+
+                    // 根据平台执行不同发布逻辑
+                    if (platform === 'zhihu') {
+                        publishToZhihu(title, content);
+                    } else if (platform === 'csdn') {
+                        publishToCSDN(title, content);
+                    } else {
+                        alert(`文章已提交到${btn.textContent.trim()}，功能即将上线！`);
+                    }
+                }, 1500);
+            });
+        });
+
+        // 发布到知乎
+        function publishToZhihu(title, content) {
+            // 这里应该是实际的知乎API调用
+            // 以下是模拟实现
+            console.log("发布到知乎:", title, content.substring(0, 50) + "...");
+
+            // 模拟API请求
+            fetch('https://api.example.com/zhihu/publish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: title,
+                    content: content,
+                    token: 'USER_AUTH_TOKEN' // 实际应用中需要用户授权
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`文章已成功发布到知乎！\n链接: ${data.url}`);
+                    } else {
+                        alert(`知乎发布失败: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('知乎发布错误:', error);
+                    alert('知乎发布失败，请检查网络连接');
+                });
+        }
+
+        // 发布到CSDN
+        function publishToCSDN(title, content) {
+            // 这里应该是实际的CSDN API调用
+            // 以下是模拟实现
+            console.log("发布到CSDN:", title, content.substring(0, 50) + "...");
+
+            // 模拟API请求
+            fetch('https://api.example.com/csdn/publish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: title,
+                    content: content,
+                    categories: ['技术博客'],
+                    tags: ['前端', 'Markdown']
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200) {
+                        alert(`文章已成功发布到CSDN！\n链接: ${data.data.url}`);
+                    } else {
+                        alert(`CSDN发布失败: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('CSDN发布错误:', error);
+                    alert('CSDN发布失败，请检查网络连接');
+                });
+        }
+    </script>
+</body>
+
+</html>
